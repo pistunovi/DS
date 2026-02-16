@@ -1,0 +1,39 @@
+name: Daily Excel Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # щодня о 00:00 UTC
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout DS repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install pandas openpyxl requests
+
+    - name: Run script
+      run: python 2/pursingakc.py
+
+    - name: Push Excel to A1 repository
+      env:
+        TOKEN: ${{ secrets.PAT_TOKEN }}
+      run: |
+        git clone https://$TOKEN@github.com/pistunovi/A1.git
+        cp result.xlsx A1/
+        cd A1
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        git add result.xlsx
+        git commit -m "Daily auto update"
+        git push
